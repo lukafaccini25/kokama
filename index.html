@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kokama Language Dictionary</title>
+  <title>'Vocabulário Interativo Kokama'</title>
   <style>
     * {
       box-sizing: border-box;
@@ -124,25 +124,21 @@
 </head>
 <body>
   <div class="header">
-    <h1>Kokama Language Dictionary</h1>
-    <p>Search for words and phrases in the Kokama language</p>
+    <h1>Vocabulário Interativo Kokama</h1>
   </div>
   
   <div class="dictionary-container">
     <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Search for a word..." />
-      <button id="searchButton">Search</button>
+      <input type="text" id="searchInput" placeholder="Busque uma palavra..." />
+      <button id="searchButton">Buscar</button>
     </div>
     
     <div id="totalCount"></div>
-    <div id="loading">Loading dictionary data...</div>
+    <div id="loading">Carregando dados...</div>
     <div class="word-list" id="wordList"></div>
   </div>
 
   <script>
-    // 1) The CSV location on GitHub (published via GitHub Pages).
-    //    Adjust this to your actual CSV link, e.g.:
-    //    https://lukafaccini25.github.io/kokama/kokama-main.csv
     const csvUrl = 'https://lukafaccini25.github.io/kokama/Data/kokama-main.csv';
 
     // 2) The base URL for audio files, e.g.:
@@ -212,7 +208,7 @@
       wordList.innerHTML = '';
 
       if (!wordsArray || wordsArray.length === 0) {
-        wordList.innerHTML = '<div class="no-results">No words found.</div>';
+        wordList.innerHTML = '<div class="no-results">Nenhuma palavra encontrada.</div>';
         return;
       }
 
@@ -275,7 +271,7 @@
     // Update the count text
     function updateTotalCount(count) {
       document.getElementById('totalCount').textContent = 
-        `Showing ${count} of ${dictionaryData.length} words`;
+        `Mostrando ${count} de ${dictionaryData.length} palavras`;
     }
 
     // Hook up the search events
