@@ -179,28 +179,42 @@
 
     // Simple CSV parser for: ID,Original file name,Kokama,Português
     function parseCSV(csvText) {
-      const lines = csvText.trim().split('\n');
-      // first line is the header
-      // e.g. ["ID","Original file name","Kokama","Português"]
-      // we start reading data lines from index 1
-      for (let i = 1; i < lines.length; i++) {
+    const lines = csvText.trim().split('\n');
+
+    // Skip the header row
+    for (let i = 1; i < lines.length; i++) {
         const row = lines[i].split(',');
         if (row.length < 4) {
-          continue; // skip malformed
+        continue;
         }
-        const id = row[0].trim();
+
+        // row[0] is your ID (e.g. "1", "10", "99", etc.)
+        // Convert it to an integer, then zero-pad to 3 digits:
+        let rawId = row[0].trim();
+        let num = parseInt(rawId, 10);
+        // If parseInt fails or the row had non-numeric data, skip
+        if (isNaN(num)) {
+        console.warn("Skipping row with invalid ID:", row);
+        continue;
+        }
+
+        // Zero-pad to 3 digits ("1" → "001", "10" → "010", "150" stays "150")
+        let paddedId = String(num).padStart(3, '0');
+
         const originalFileName = row[1].trim();
         const kokama = row[2].trim();
         const portuguese = row[3].trim();
 
         dictionaryData.push({
-          id,
-          originalFileName,
-          kokama,
-          portuguese
+        // Now store the *padded* ID
+        id: paddedId,
+        originalFileName,
+        kokama,
+        portuguese
         });
-      }
     }
+    }
+
 
     // Render words in #wordList
     function displayWords(wordsArray) {
@@ -238,7 +252,7 @@
         playButton.innerHTML = '<div class="play-icon"></div>';
         
         playButton.addEventListener('click', () => {
-          const audioUrl = audioBasePath + encodeURIComponent(item.id) + '.mp3';
+            const audioUrl = audioBasePath + item.id + ".mp3";
           const audio = new Audio(audioUrl);
           audio.play().catch(err => {
             console.error('Error playing audio', err);
