@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kokama Language Dictionary</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .dictionary-container {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .search-container {
+      margin-bottom: 20px;
+    }
+    #searchInput {
+      padding: 10px;
+      width: 70%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    #searchButton {
+      padding: 10px 15px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #searchButton:hover {
+      background-color: #3367d6;
+    }
+    .word-list {
+      height: 500px;
+      overflow-y: auto;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .word-entry {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .word-entry:hover {
+      background-color: #f9f9f9;
+    }
+    .word-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .original {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 18px;
+    }
+    .translation {
+      color: #666;
+    }
+    .play-button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .play-button:hover {
+      background-color: #3367d6;
+    }
+    .play-icon {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 8px 0 8px 12px;
+      border-color: transparent transparent transparent #ffffff;
+      margin-left: 3px;
+    }
+    #totalCount {
+      margin-top: 10px;
+      color: #666;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .header p {
+      color: #666;
+      font-size: 16px;
+    }
+    #loading {
+      text-align: center;
+      padding: 20px;
+      display: none;
+    }
+    .no-results {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Kokama Language Dictionary</h1>
+    <p>Search for words and phrases in the Kokama language</p>
+  </div>
+  
+  <div class="dictionary-container">
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Search for a word..." />
+      <button id="searchButton">Search</button>
+    </div>
+    
+    <div id="totalCount"></div>
+    <div id="loading">Loading dictionary data...</div>
+    <div class="word-list" id="wordList"></div>
+  </div>
+
+  <script>
+    // 1) The CSV location on GitHub (published via GitHub Pages).
+    //    Adjust this to your actual CSV link, e.g.:
+    //    https://lukafaccini25.github.io/kokama/kokama-main.csv
+    const csvUrl = 'https://lukafaccini25.github.io/kokama/Data/kokama-main.csv';
+
+    // 2) The base URL for audio files, e.g.:
+    //    https://lukafaccini25.github.io/kokama/MP3/
+    // so that final audio URL is e.g. <audioBasePath>/001.mp3
+    const audioBasePath = 'https://lukafaccini25.github.io/kokama/MP3/';
+
+    // This array will hold parsed dictionary data from the CSV.
+    // We'll store objects like { id, kokama, portuguese, originalFilename }
+    let dictionaryData = [];
+
+    window.addEventListener('load', loadDictionaryData);
+
+    // Fetch and parse the CSV
+    async function loadDictionaryData() {
+      const loadingElem = document.getElementById('loading');
+      loadingElem.style.display = 'block';
+
+      try {
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          throw new Error('Network response was not OK');
+        }
+        const csvText = await response.text();
+        parseCSV(csvText);
+
+        // Once parsed, show them all
+        displayWords(dictionaryData);
+        updateTotalCount(dictionaryData.length);
+      } catch (error) {
+        console.error('Error loading dictionary data:', error);
+        document.getElementById('wordList').innerHTML = 
+          '<div class="no-results">Error loading data. Check console for details.</div>';
+      } finally {
+        loadingElem.style.display = 'none';
+      }
+    }
+
+    // Simple CSV parser for: ID,Original file name,Kokama,Português
+    function parseCSV(csvText) {
+      const lines = csvText.trim().split('\n');
+      // first line is the header
+      // e.g. ["ID","Original file name","Kokama","Português"]
+      // we start reading data lines from index 1
+      for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(',');
+        if (row.length < 4) {
+          continue; // skip malformed
+        }
+        const id = row[0].trim();
+        const originalFileName = row[1].trim();
+        const kokama = row[2].trim();
+        const portuguese = row[3].trim();
+
+        dictionaryData.push({
+          id,
+          originalFileName,
+          kokama,
+          portuguese
+        });
+      }
+    }
+
+    // Render words in #wordList
+    function displayWords(wordsArray) {
+      const wordList = document.getElementById('wordList');
+      wordList.innerHTML = '';
+
+      if (!wordsArray || wordsArray.length === 0) {
+        wordList.innerHTML = '<div class="no-results">No words found.</div>';
+        return;
+      }
+
+      wordsArray.forEach(item => {
+        const wordEntry = document.createElement('div');
+        wordEntry.className = 'word-entry';
+        
+        const wordText = document.createElement('div');
+        wordText.className = 'word-text';
+
+        // Show Kokama as the “original” line
+        const kokamaDiv = document.createElement('div');
+        kokamaDiv.className = 'original';
+        kokamaDiv.textContent = item.kokama;
+
+        // Show Portuguese as the translation line
+        const portugueseDiv = document.createElement('div');
+        portugueseDiv.className = 'translation';
+        portugueseDiv.textContent = item.portuguese;
+
+        wordText.appendChild(kokamaDiv);
+        wordText.appendChild(portugueseDiv);
+
+        // A play button that plays ID.mp3
+        const playButton = document.createElement('button');
+        playButton.className = 'play-button';
+        playButton.innerHTML = '<div class="play-icon"></div>';
+        
+        playButton.addEventListener('click', () => {
+          const audioUrl = audioBasePath + encodeURIComponent(item.id) + '.mp3';
+          const audio = new Audio(audioUrl);
+          audio.play().catch(err => {
+            console.error('Error playing audio', err);
+            alert('Could not play audio. See console for details.');
+          });
+        });
+
+        wordEntry.appendChild(wordText);
+        wordEntry.appendChild(playButton);
+        wordList.appendChild(wordEntry);
+      });
+    }
+
+    // Filter on the Kokama or Portuguese text
+    function searchDictionary() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!searchTerm) {
+        displayWords(dictionaryData);
+        updateTotalCount(dictionaryData.length);
+        return;
+      }
+      const filtered = dictionaryData.filter(item => 
+        item.kokama.toLowerCase().includes(searchTerm) ||
+        item.portuguese.toLowerCase().includes(searchTerm)
+      );
+      displayWords(filtered);
+      updateTotalCount(filtered.length);
+    }
+
+    // Update the count text
+    function updateTotalCount(count) {
+      document.getElementById('totalCount').textContent = 
+        `Showing ${count} of ${dictionaryData.length} words`;
+    }
+
+    // Hook up the search events
+    document.getElementById('searchButton').addEventListener('click', searchDictionary);
+    document.getElementById('searchInput').addEventListener('keyup', event => {
+      if (event.key === 'Enter') {
+        searchDictionary();
+      }
+    });
+  </script>
+</body>
+</html>
