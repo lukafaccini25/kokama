@@ -140,7 +140,7 @@
 
   <script>
     // 1) The CSV location on GitHub (replace with your actual CSV link)
-    const csvUrl = 'https://lukafaccini25.github.io/kokama/Data/kokama-main.csv';
+    const csvUrl = 'https://lukafaccini25.github.io/kokama/Data/kokama-main2.csv';
 
     // 2) The base URL for audio files
     //    so final audio URL is e.g. https://lukafaccini25.github.io/kokama/MP3/001.mp3
@@ -178,7 +178,7 @@
       // skip the header row
       for (let i = 1; i < lines.length; i++) {
         const row = lines[i].split(',');
-        if (row.length < 4) continue;
+        if (row.length < 3) continue;
 
         // parse ID -> zero-pad to 3 digits
         let rawId = row[0].trim();
@@ -189,13 +189,11 @@
         }
         let paddedId = String(num).padStart(3, '0');
 
-        const originalFileName = row[1].trim();
-        const kokama = row[2].trim();
-        const portuguese = row[3].trim();
+        const kokama = row[1].trim();
+        const portuguese = row[2].trim();
 
         dictionaryData.push({
           id: paddedId,
-          originalFileName,
           kokama,
           portuguese
         });
